@@ -10,7 +10,20 @@ mod graph;
 use osmpbfreader::OsmObj;
 
 fn predicate(object: &OsmObj) -> bool {
-    object.is_way() && object.tags().contains("highway", "motorway")
+    object.is_way()
+        && (object.tags().contains("highway", "motorway")
+            || object.tags().contains("highway", "motorway_link")
+            || object.tags().contains("highway", "trunk")
+            || object.tags().contains("highway", "trunk_link")
+            || object.tags().contains("highway", "primary")
+            || object.tags().contains("highway", "primary_link")
+            || object.tags().contains("highway", "secondary")
+            || object.tags().contains("highway", "secondary_link")
+            || object.tags().contains("highway", "tertiary")
+            || object.tags().contains("highway", "tertiary_link")
+            || object.tags().contains("highway", "unclassified")
+            || object.tags().contains("highway", "residential")
+            || object.tags().contains("highway", "living_street"))
 }
 
 fn read_osmpbf(filename: std::ffi::OsString) -> osmpbfreader::OsmPbfReader<std::fs::File> {
