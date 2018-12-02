@@ -2,19 +2,35 @@ use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::io::{Read, Write};
 
-use osmpbfreader::{NodeId, OsmId, OsmObj, WayId};
+use osmpbfreader::{NodeId, OsmId, OsmObj};
 use petgraph;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Node {
   pub id: i64,
-  pub decimicro_lat: i32,
-  pub decimicro_lon: i32,
+  pub lat: f64,
+  pub lon: f64,
 }
 
-pub type Graph = petgraph::Graph<Node, i64>;
+pub type Graph = petgraph::Graph<Node, i32>;
 
 pub fn create_graph(objects: BTreeMap<OsmId, OsmObj>) -> Graph {
+  let mut weights = HashMap::new();
+
+  weights.insert("motorway", 1);
+  weights.insert("motorway_link", 2);
+  weights.insert("trunk", 3);
+  weights.insert("trunk_link", 4);
+  weights.insert("primary", 5);
+  weights.insert("primary_link", 6);
+  weights.insert("secondary", 7);
+  weights.insert("secondary_link", 8);
+  weights.insert("tertiary", 9);
+  weights.insert("tertiary_link", 10);
+  weights.insert("unclassified", 11);
+  weights.insert("residential", 12);
+  weights.insert("living_street", 13);
+
   let mut nodes = HashMap::new();
   let mut graph = Graph::new();
 
@@ -25,15 +41,14 @@ pub fn create_graph(objects: BTreeMap<OsmId, OsmObj>) -> Graph {
 
         let node = Node {
           id: node_id,
-          decimicro_lat: osm_node.decimicro_lat,
-          decimicro_lon: osm_node.decimicro_lon,
+          lat: (osm_node.decimicro_lat as f64) * 1e-7,
+          lon: (osm_node.decimicro_lon as f64) * 1e-7,
         };
 
         let node_index = graph.add_node(node);
         nodes.insert(node_id, node_index);
       }
       OsmObj::Way(osm_way) => {
-        let WayId(way_id) = osm_way.id;
         for osm_node_ids in osm_way.nodes.windows(2) {
           let NodeId(node1_id) = osm_node_ids[0];
           let NodeId(node2_id) = osm_node_ids[1];
@@ -41,7 +56,10 @@ pub fn create_graph(objects: BTreeMap<OsmId, OsmObj>) -> Graph {
           let node1_index = nodes.get(&node1_id).unwrap();
           let node2_index = nodes.get(&node2_id).unwrap();
 
-          graph.add_edge(*node1_index, *node2_index, way_id);
+          let highway = osm_way.tags.get("highway").unwrap().as_str();
+          let weight = weights.get(highway).unwrap();
+
+          graph.add_edge(*node1_index, *node2_index, *weight);
         }
       }
       OsmObj::Relation(_) => {}
