@@ -1,4 +1,4 @@
-# OSM Graph Builder
+# OSM Router
 
 Some experiments with OpenStreetMap and Rust.
 
@@ -7,6 +7,8 @@ Some experiments with OpenStreetMap and Rust.
 - [x] Reading OSM PBF
 - [x] Graph building
 - [x] Graph serealization/deserealization
-- [ ] Edge weights calculating
-- [ ] Spatial index for nodes lookup
-- [ ] Routing
+- [x] Edge weights calculating
+- [x] Spatial index for nodes lookup
+- [x] Routing
+- [ ] GeoJSON input/output
+- [ ] Web server
