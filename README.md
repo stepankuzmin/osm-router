@@ -2,6 +2,17 @@
 
 Some experiments with OpenStreetMap and Rust.
 
+![screenshot](https://raw.githubusercontent.com/stepankuzmin/osm-router/master/screenshot.png)
+
+## Usage
+
+```shell
+git clone https://github.com/stepankuzmin/osm-router.git
+cd osm-router
+wget moscow.osm.pbf
+cargo run -- moscow.osm.pbf
+```
+
 ## Plans
 
 - [x] Reading OSM PBF
@@ -12,4 +23,4 @@ Some experiments with OpenStreetMap and Rust.
 - [x] Simple routing
 - [x] GeoJSON input/output
 - [x] Web server
-- [ ] Web UI
+- [x] Web UI

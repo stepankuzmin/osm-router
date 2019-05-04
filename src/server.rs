@@ -1,7 +1,7 @@
 use std::io;
 use std::sync::{Arc};
 
-use actix_web::{App, HttpRequest, HttpResponse, HttpServer, Result, error, web};
+use actix_web::{App, HttpRequest, HttpResponse, HttpServer, Result, error, middleware, web};
 use actix_web::http::StatusCode;
 use geojson::{Geometry, Value};
 use serde_json;
@@ -35,6 +35,8 @@ pub fn start(graph: Graph) -> io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
+            .wrap(middleware::cors::Cors::default())
+            .wrap(middleware::Logger::default())
             .data(State { graph: graph.clone() })
             .service(route)
         })

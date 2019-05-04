@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>OSM Router</title>
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v0.54.0/mapbox-gl.js"></script>
+    <link
+      href="https://api.tiles.mapbox.com/mapbox-gl-js/v0.54.0/mapbox-gl.css"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      #map {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map"></div>
+
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const accessToken = params.get("accessToken");
+
+      if (!accessToken) {
+        const accessToken = prompt("accessToken");
+        params.set("accessToken", accessToken);
+        window.location.search = "?" + params.toString();
+      }
+
+      mapboxgl.accessToken = accessToken;
+
+      const map = new mapboxgl.Map({
+        container: "map",
+        style: "mapbox://styles/mapbox/light-v10",
+        center: [37.6172, 55.7522],
+        zoom: 12,
+        hash: true
+      });
+
+      map.on("load", () => {
+        map.addLayer({
+          id: "route",
+          type: "line",
+          source: {
+            type: "geojson",
+            data: null
+          },
+          layout: {
+            "line-join": "round",
+            "line-cap": "round"
+          },
+          paint: {
+            "line-color": "#888",
+            "line-width": 8
+          }
+        });
+      });
+
+      let start;
+      let finish;
+
+      const route = () => {
+        const startLngLat = start.getLngLat();
+        const finishLngLat = finish.getLngLat();
+
+        const startPoint = `${startLngLat.lng},${startLngLat.lat}`;
+        const finishPoint = `${finishLngLat.lng},${finishLngLat.lat}`;
+        const waypoints = `${startPoint};${finishPoint}`;
+
+        console.time("route");
+        fetch(`http://localhost:8080/${waypoints}`)
+          .then(response => response.json())
+          .then(response => {
+            console.timeEnd("route");
+
+            const feature = {
+              type: "Feature",
+              properties: {},
+              geometry: response
+            };
+
+            map.getSource("route").setData(feature);
+          })
+          .catch(error => {
+            console.timeEnd("route");
+            console.error(error);
+          });
+      };
+
+      const onClick = event => {
+        if (!start) {
+          start = new mapboxgl.Marker({ draggable: true, color: "#0f0" })
+            .setLngLat([event.lngLat.lng, event.lngLat.lat])
+            .addTo(map);
+
+          return;
+        }
+
+        if (start && !finish) {
+          finish = new mapboxgl.Marker({ draggable: true, color: "#f00" })
+            .setLngLat([event.lngLat.lng, event.lngLat.lat])
+            .on("dragend", route)
+            .addTo(map);
+
+          start.on("dragend", route);
+          map.off("click", onClick);
+          route();
+        }
+      };
+
+      map.on("click", onClick);
+    </script>
+  </body>
+</html>
