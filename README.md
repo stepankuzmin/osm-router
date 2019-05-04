@@ -7,8 +7,9 @@ Some experiments with OpenStreetMap and Rust.
 - [x] Reading OSM PBF
 - [x] Graph building
 - [x] Graph serealization/deserealization
-- [x] Edge weights calculating
+- [x] Simple edge weight calculating
 - [x] Spatial index for nodes lookup
-- [x] Routing
-- [ ] GeoJSON input/output
-- [ ] Web server
+- [x] Simple routing
+- [x] GeoJSON input/output
+- [x] Web server
+- [ ] Web UI

@@ -1,14 +1,21 @@
 [package]
-name = "galton"
+name = "osm-router"
 version = "0.1.0"
 authors = ["Stepan Kuzmin <to.stepan.kuzmin@gmail.com>"]
+edition = "2018"
 
 [dependencies]
-bincode = "1.0.1"
-geojson = "0.15.0"
-num-traits = "0.2"
+actix-rt = "0.2"
+actix-web = "1.0.0-beta.2"
+bincode = "1.1"
+bytes = "0.4"
+env_logger = "0.6"
+futures = "0.1.26"
+geojson = "0.15"
+log = "0.4"
 osmpbfreader = "0.13.0"
 petgraph = { version = "0.4.13", features = ["serde-1"] }
 rstar = { version = "0.3.0", features = ["serde"] }
 serde = "1.0"
 serde_derive = "1.0"
+serde_json = "1.0"

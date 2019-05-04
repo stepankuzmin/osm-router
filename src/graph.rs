@@ -5,6 +5,7 @@ use osmpbfreader::{NodeId, OsmObj};
 use petgraph;
 use rstar::{Point, RTree};
 
+#[allow(dead_code)]
 fn predicate(object: &OsmObj) -> bool {
   let tags = object.tags();
   object.is_way()
@@ -23,6 +24,7 @@ fn predicate(object: &OsmObj) -> bool {
       || tags.contains("highway", "living_street"))
 }
 
+#[allow(dead_code)]
 fn read_osmpbf(filename: std::ffi::OsString) -> osmpbfreader::OsmPbfReader<std::fs::File> {
   let path = std::path::Path::new(&filename);
   let file = std::fs::File::open(&path).unwrap();
@@ -73,6 +75,7 @@ pub struct Graph {
 }
 
 impl Graph {
+  #[allow(dead_code)]
   pub fn new(filename: std::ffi::OsString) -> Graph {
     let mut pbf = read_osmpbf(filename);
     let objects = pbf.get_objs_and_deps(predicate).unwrap();
