@@ -11,6 +11,7 @@ git clone https://github.com/stepankuzmin/osm-router.git
 cd osm-router
 wget moscow.osm.pbf
 cargo run -- moscow.osm.pbf
+open debug.html
 ```
 
 ## Plans
