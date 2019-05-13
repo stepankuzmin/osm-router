@@ -2,10 +2,9 @@ use std::collections::HashMap;
 use std::io::{Read, Write};
 
 use osmpbfreader::{NodeId, OsmObj};
-use petgraph;
+use petgraph::prelude::NodeIndex;
 use rstar::{Point, RTree};
 
-#[allow(dead_code)]
 fn predicate(object: &OsmObj) -> bool {
   let tags = object.tags();
   object.is_way()
@@ -24,7 +23,6 @@ fn predicate(object: &OsmObj) -> bool {
       || tags.contains("highway", "living_street"))
 }
 
-#[allow(dead_code)]
 fn read_osmpbf(filename: std::ffi::OsString) -> osmpbfreader::OsmPbfReader<std::fs::File> {
   let path = std::path::Path::new(&filename);
   let file = std::fs::File::open(&path).unwrap();
@@ -34,6 +32,7 @@ fn read_osmpbf(filename: std::ffi::OsString) -> osmpbfreader::OsmPbfReader<std::
 #[derive(Clone, Copy, Serialize, Deserialize, Debug, PartialEq, PartialOrd)]
 pub struct Node {
   pub id: i64,
+  pub index: NodeIndex,
   pub lon: f64,
   pub lat: f64,
 }
@@ -45,6 +44,7 @@ impl Point for Node {
   fn generate(generator: impl Fn(usize) -> Self::Scalar) -> Self {
     Node {
       id: 0,
+      index: NodeIndex::new(0),
       lon: generator(0),
       lat: generator(1),
     }
@@ -70,12 +70,10 @@ impl Point for Node {
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Graph {
   data: petgraph::Graph<Node, i32>,
-  nodes: HashMap<i64, petgraph::prelude::NodeIndex>,
   index: rstar::RTree<Node>,
 }
 
 impl Graph {
-  #[allow(dead_code)]
   pub fn new(filename: std::ffi::OsString) -> Graph {
     let mut pbf = read_osmpbf(filename);
     let objects = pbf.get_objs_and_deps(predicate).unwrap();
@@ -98,22 +96,24 @@ impl Graph {
 
     let mut nodes = HashMap::new();
     let mut graph = petgraph::Graph::new();
-    let mut tree = RTree::new();
+    let mut index = RTree::new();
 
     for (_id, object) in &objects {
       match object {
         OsmObj::Node(osm_node) => {
           let NodeId(node_id) = osm_node.id;
 
-          let node = Node {
+          let mut node = Node {
             id: node_id,
+            index: NodeIndex::new(0),
             lat: (osm_node.decimicro_lat as f64) * 1e-7,
             lon: (osm_node.decimicro_lon as f64) * 1e-7,
           };
 
           let node_index = graph.add_node(node);
+          node.index = node_index;
           nodes.insert(node_id, node_index);
-          tree.insert(node);
+          index.insert(node);
         }
         OsmObj::Way(osm_way) => {
           for osm_node_ids in osm_way.nodes.windows(2) {
@@ -135,14 +135,14 @@ impl Graph {
 
     Graph {
       data: graph,
-      nodes: nodes,
-      index: tree,
+      index: index,
     }
   }
 
   pub fn nearest_node(&self, lonlat: &[f64]) -> Option<&Node> {
     let node = Node {
       id: 0,
+      index: NodeIndex::new(0),
       lon: lonlat[0],
       lat: lonlat[1],
     };
@@ -150,21 +150,17 @@ impl Graph {
     self.index.nearest_neighbor(&node)
   }
 
-  pub fn node_index(&self, node: &Node) -> Option<&petgraph::prelude::NodeIndex> {
-    self.nodes.get(&node.id)
-  }
-
   pub fn route(&self, start: &[f64], finish: &[f64]) -> (i32, Vec<Vec<f64>>) {
     let start_node = self.nearest_node(start).unwrap();
     let finish_node = self.nearest_node(finish).unwrap();
 
-    let start_index = self.node_index(&start_node).unwrap();
-    let finish_index = self.node_index(&finish_node).unwrap();
+    let start_index = start_node.index;
+    let finish_index = finish_node.index;
 
     let (score, path) = petgraph::algo::astar(
       &self.data,
-      *start_index,
-      |finish| finish == *finish_index,
+      start_index,
+      |finish| finish == finish_index,
       |e| *e.weight(),
       |_| 0,
     )
@@ -181,14 +177,12 @@ impl Graph {
     (score, route)
   }
 
-  #[allow(dead_code)]
   pub fn write(&self, filename: std::ffi::OsString) -> () {
     let graph_bin = bincode::serialize(&self).unwrap();
     let mut buffer = std::fs::File::create(filename).unwrap();
     buffer.write(&graph_bin).unwrap();
   }
 
-  #[allow(dead_code)]
   pub fn read(filename: std::ffi::OsString) -> Graph {
     let mut file = std::fs::File::open(filename).unwrap();
     let mut buffer = vec![];
