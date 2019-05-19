@@ -6,12 +6,12 @@ edition = "2018"
 
 [dependencies]
 actix-rt = "0.2"
-actix-web = "1.0.0-beta.5"
+actix-web = "1.0.0-rc"
 bincode = "1.1"
 bytes = "0.4"
 env_logger = "0.6"
-futures = "0.1.26"
-geojson = "0.15"
+futures = "0.1.27"
+geojson = "0.16"
 log = "0.4"
 osmpbfreader = "0.13.0"
 petgraph = { version = "0.4.13", features = ["serde-1"] }
