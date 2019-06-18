@@ -5,6 +5,7 @@ authors = ["Stepan Kuzmin <to.stepan.kuzmin@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+actix-cors = "0.1.0"
 actix-rt = "0.2"
 actix-web = "1.0.0-rc"
 bincode = "1.1"

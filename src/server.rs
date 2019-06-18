@@ -1,8 +1,10 @@
 use std::io;
-use std::sync::{Arc};
+use std::sync::Arc;
 
-use actix_web::{App, HttpRequest, HttpResponse, HttpServer, Result, error, middleware, web};
+use actix_cors::Cors;
+
 use actix_web::http::StatusCode;
+use actix_web::{error, middleware, web, App, HttpRequest, HttpResponse, HttpServer, Result};
 use geojson::{Geometry, Value};
 use serde_json;
 
@@ -11,13 +13,16 @@ use super::utils::parse_waypoints;
 
 #[derive(Debug)]
 struct State {
-    graph: Arc<Graph>
+    graph: Arc<Graph>,
 }
 
 #[get("/{waypoints}")]
-fn route(state: web::Data<State>, req: HttpRequest, path: web::Path<(String,)>) -> Result<HttpResponse> {
-    let waypoints = parse_waypoints(&path.0)
-        .map_err(|_| error::ErrorBadRequest("bad request"))?;
+fn route(
+    state: web::Data<State>,
+    req: HttpRequest,
+    path: web::Path<(String,)>,
+) -> Result<HttpResponse> {
+    let waypoints = parse_waypoints(&path.0).map_err(|_| error::ErrorBadRequest("bad request"))?;
 
     let (_, route) = state.graph.route(&waypoints[0], &waypoints[1]);
 
@@ -35,13 +40,15 @@ pub fn start(graph: Graph) -> io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
-            .wrap(middleware::cors::Cors::default())
+            .wrap(Cors::default())
             .wrap(middleware::Logger::default())
-            .data(State { graph: graph.clone() })
+            .data(State {
+                graph: graph.clone(),
+            })
             .service(route)
-        })
-        .bind("127.0.0.1:8080")?
-        .start();
+    })
+    .bind("127.0.0.1:8080")?
+    .start();
 
     println!("Starting http server at 127.0.0.1:8080");
     sys.run()
